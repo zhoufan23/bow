@@ -392,7 +392,7 @@ def _update(sql, *args):
         cursor = _db_ctx.connection.cursor()
         cursor.execute(sql, args)
         r = cursor.rowcount
-        if _db_ctx.transactions==0:
+        if _db_ctx.transactions == 0:
             # no transaction enviroment:
             logging.info('auto commit')
             _db_ctx.connection.commit()
@@ -443,13 +443,6 @@ def update(sql, *args):
     0
     '''
     return _update(sql, *args)
-
-def update_profile(id, name, rollback):
-    u = dict(id=id, name=name, email='%s@test.org' % name, passwd=name, last_modified=time.time())
-    insert('user', **u)
-    r = update('update user set passwd=? where id=?', name.upper(), id)
-    if rollback:
-        raise StandardError('will cause rollback...')
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
