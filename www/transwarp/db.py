@@ -446,10 +446,10 @@ def update(sql, *args):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    create_engine('bow', 'bow', 'test')
-    update('delete from user')
-    #update('drop table if exists user')
-    #update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+    create_engine('bow', 'bow', 'bow')
+    #update('delete from user')
+    update('drop table if exists user')
+    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)type=InnoDB')
     import doctest
     doctest.testmod()
 

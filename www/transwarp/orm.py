@@ -297,8 +297,8 @@ class Model(db.Dict):
 
 if __name__=='__main__':
     logging.basicConfig(level=logging.DEBUG)
-    db.create_engine('bow', 'bow', 'test')
+    db.create_engine('bow', 'bow', 'bow')
     db.update('drop table if exists user')
-    db.update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+    db.update('create table user (id int primary key, name text, email text, passwd text, last_modified real)type=InnoDB')
     import doctest
     doctest.testmod()
