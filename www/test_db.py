@@ -7,7 +7,7 @@ from models import User
 
 from transwarp import db
 
-db.create_engine(user='bow', password='bow', database='bow')
+db.create_engine(user='root', password='', database='bow')
 db.update('drop table if exists user')
 db.update(User().__sql__)
 

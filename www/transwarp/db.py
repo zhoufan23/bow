@@ -59,12 +59,15 @@ def _profiling(start, sql=''):
     else:
         logging.info('[PROFILING] [DB] %s: %s' % (t, sql))
 
+
 class DBError(Exception):
     pass
 
+
 class MultiColumnsError(DBError):
     pass
-    
+
+
 class _LasyConnection(object):
     def __init__(self):
         self.connection = None
@@ -93,6 +96,7 @@ class _DbCtx(threading.local):
     '''
     Thread local obj
     '''
+
     def __init__(self):
         self.connection = None
         self.transactions = 0
@@ -134,14 +138,15 @@ def create_engine(user, password, database, host='127.0.0.1', port=3306, **kw):
     params = dict(user=user, password=password,
                   database=database, host=host, port=port)
     defaults = dict(use_unicode=True, charset='utf8',
-                    collation='utf8_general_ci', autocommit=False)
+                    collation='utf8_general_ci', autocommit=True)
     for k, v in defaults.iteritems():
         params[k] = kw.pop(k, v)
-        params.update(kw)
-        params['buffered'] = True
-        engine = _Engine(lambda: mysql.connector.connect(**params))
-        # test connection...
-        logging.info('Init mysql engine <%s> ok.' % hex(id(engine)))
+    params.update(kw)
+    params['buffered'] = True
+    engine = _Engine(lambda: mysql.connector.connect(**params))
+    # test connection...
+    logging.info('Init mysql engine <%s> ok.' % hex(id(engine)))
+
 
 class _TransactionCtx(object):
     def __enter__(self):
@@ -151,14 +156,14 @@ class _TransactionCtx(object):
             _db_ctx.init()
             self.should_close_conn = True
         _db_ctx.transactions = _db_ctx.transactions + 1
-        logging.info('begin transaction...' if _db_ctx.transactions==1 else 'join current transaction...')
+        logging.info('begin transaction...' if _db_ctx.transactions == 1 else 'join current transaction...')
         return self
-    
+
     def __exit__(self, exctype, excvalue, traceback):
         global _db_ctx
         _db_ctx.transactions = _db_ctx.transactions - 1
         try:
-            if _db_ctx.transactions==0:
+            if _db_ctx.transactions == 0:
                 if exctype is None:
                     self.commit()
                 else:
@@ -184,6 +189,7 @@ class _TransactionCtx(object):
         logging.warning('rollback transaction...')
         _db_ctx.connection.rollback()
         logging.info('rollback ok.')
+
 
 def transaction():
     '''
@@ -212,6 +218,7 @@ def transaction():
     '''
     return _TransactionCtx()
 
+
 def with_transaction(func):
     '''
     A decorator that makes function around transaction.
@@ -233,13 +240,16 @@ def with_transaction(func):
     >>> select('select * from user where id=?', 9090)
     []
     '''
+
     @functools.wraps(func)
     def _wrapper(*args, **kw):
         _start = time.time()
         with _TransactionCtx():
             return func(*args, **kw)
         _profiling(_start)
+
     return _wrapper
+
 
 class _ConnectionCtx(object):
     '''
@@ -260,11 +270,11 @@ class _ConnectionCtx(object):
             self.should_cleanup = True
         return self
 
-
     def __exit__(self, exctype, excvalue, traceback):
         global _db_ctx
         if self.should_cleanup:
             _db_ctx.cleanup()
+
 
 def connection():
     '''
@@ -275,11 +285,13 @@ def connection():
     '''
     return _ConnectionCtx()
 
+
 def with_connection(func):
     @functools.wraps(func)
     def _wrapper(*args, **kw):
         with _ConnectionCtx():
             return func(*args, **kw)
+
     return _wrapper
 
 
@@ -304,6 +316,7 @@ def _select(sql, first, *args):
         if cursor:
             cursor.close()
 
+
 @with_connection
 def select_one(sql, *args):
     '''
@@ -326,6 +339,7 @@ def select_one(sql, *args):
     u'Alice'
     '''
     return _select(sql, True, *args)
+
 
 @with_connection
 def select_int(sql, *args):
@@ -353,9 +367,10 @@ def select_int(sql, *args):
     MultiColumnsError: Expect only one column.
     '''
     d = _select(sql, True, *args)
-    if len(d)!=1:
+    if len(d) != 1:
         raise MultiColumnsError('Expect only one column.')
     return d.values()[0]
+
 
 @with_connection
 def select(sql, *args):
@@ -382,6 +397,7 @@ def select(sql, *args):
     '''
     return _select(sql, False, *args)
 
+
 @with_connection
 def _update(sql, *args):
     global _db_ctx
@@ -401,6 +417,7 @@ def _update(sql, *args):
         if cursor:
             cursor.close()
 
+
 def insert(table, **kw):
     '''
     Execute insert SQL.
@@ -417,8 +434,10 @@ def insert(table, **kw):
     IntegrityError: 1062 (23000): Duplicate entry '2000' for key 'PRIMARY'
     '''
     cols, args = zip(*kw.iteritems())
-    sql = 'insert into `%s` (%s) values (%s)' % (table, ','.join(['`%s`' % col for col in cols]), ','.join(['?' for i in range(len(cols))]))
+    sql = 'insert into `%s` (%s) values (%s)' % (
+    table, ','.join(['`%s`' % col for col in cols]), ','.join(['?' for i in range(len(cols))]))
     return _update(sql, *args)
+
 
 def update(sql, *args):
     r'''
@@ -444,13 +463,13 @@ def update(sql, *args):
     '''
     return _update(sql, *args)
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    create_engine('bow', 'bow', 'bow')
-    #update('delete from user')
+    create_engine('root', '', 'bow')
+    # update('delete from user')
     update('drop table if exists user')
-    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)type=InnoDB')
+    update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
     import doctest
+
     doctest.testmod()
-
-

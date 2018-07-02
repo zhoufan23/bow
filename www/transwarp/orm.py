@@ -11,8 +11,10 @@ import time, logging
 
 import db
 
+
 class Field(object):
     _count = 0
+
     def __init__(self, **kw):
         self.name = kw.get('name', None)
         self._default = kw.get('default', None)
@@ -23,7 +25,7 @@ class Field(object):
         self.ddl = kw.get('ddl', '')
         self._order = Field._count
         Field._count += 1
-    
+
     @property
     def default(self):
         d = self._default
@@ -37,6 +39,7 @@ class Field(object):
         s.append('>')
         return ''.join(s)
 
+
 class StringField(Field):
     def __init__(self, **kw):
         if not 'default' in kw:
@@ -44,6 +47,7 @@ class StringField(Field):
         if not 'ddl' in kw:
             kw['ddl'] = 'varchar(255)'
         super(StringField, self).__init__(**kw)
+
 
 class IntegerField(Field):
 
@@ -54,6 +58,7 @@ class IntegerField(Field):
             kw['ddl'] = 'bigint'
         super(IntegerField, self).__init__(**kw)
 
+
 class FloatField(Field):
 
     def __init__(self, **kw):
@@ -62,6 +67,7 @@ class FloatField(Field):
         if not 'ddl' in kw:
             kw['ddl'] = 'real'
         super(FloatField, self).__init__(**kw)
+
 
 class BooleanField(Field):
 
@@ -72,6 +78,7 @@ class BooleanField(Field):
             kw['ddl'] = 'bool'
         super(BooleanField, self).__init__(**kw)
 
+
 class TextField(Field):
 
     def __init__(self, **kw):
@@ -80,6 +87,7 @@ class TextField(Field):
         if not 'ddl' in kw:
             kw['ddl'] = 'text'
         super(TextField, self).__init__(**kw)
+
 
 class BlobField(Field):
 
@@ -90,27 +98,31 @@ class BlobField(Field):
             kw['ddl'] = 'blob'
         super(BlobField, self).__init__(**kw)
 
+
 class VersionField(Field):
 
     def __init__(self, name=None):
         super(VersionField, self).__init__(name=name, default=0, ddl='bigint')
 
+
 _triggers = frozenset(['pre_insert', 'pre_update', 'pre_delete'])
+
 
 def _gen_sql(table_name, mappings):
     pk = None
     sql = ['-- generating SQL for %s:' % table_name, 'create table `%s` (' % table_name]
-    for f in sorted(mappings.values(), lambda x, y : cmp(x._order, y._order)):
+    for f in sorted(mappings.values(), lambda x, y: cmp(x._order, y._order)):
         if not hasattr(f, 'ddl'):
             raise StandardError('no ddl in field "%s".' % n)
         ddl = f.ddl
         nullable = f.nullable
         if f.primary_key:
             pk = f.name
-        sql.append(nullable and '  `%s` %s,' %(f.name, ddl) or '  `%s` %s not null,' % (f.name, ddl))
+        sql.append(nullable and '  `%s` %s,' % (f.name, ddl) or '  `%s` %s not null,' % (f.name, ddl))
     sql.append('  primary key(`%s`)' % pk)
     sql.append(');')
     return '\n'.join(sql)
+
 
 class ModelMetaclass(type):
     '''
@@ -120,7 +132,7 @@ class ModelMetaclass(type):
     def __new__(cls, name, bases, attrs):
         if name == 'Model':
             return type.__new__(cls, name, bases, attrs)
-        
+
         if not hasattr(cls, 'subclass'):
             cls.subclass = {}
         if not name in cls.subclass:
@@ -149,10 +161,10 @@ class ModelMetaclass(type):
                 mappings[k] = v
         if not primary_key:
             raise TypeError('Primary key not defined in class: %s' % name)
-        
+
         for k in mappings.iterkeys():
             attrs.pop(k)
-        
+
         if not '__table__' in attrs:
             attrs['__table__'] = name.lower()
         attrs['__mappings__'] = mappings
@@ -162,6 +174,7 @@ class ModelMetaclass(type):
             if not trigger in attrs:
                 attrs[trigger] = None
         return type.__new__(cls, name, bases, attrs)
+
 
 class Model(db.Dict):
     '''
@@ -257,7 +270,8 @@ class Model(db.Dict):
         '''
         Find by 'select count(pk) from table where ... ' and return int.
         '''
-        return db.select_int('select count(`%s`) from `%s` %s' % (cls.__primary_key__.name, cls.__table__, where), *args)
+        return db.select_int('select count(`%s`) from `%s` %s' % (cls.__primary_key__.name, cls.__table__, where),
+                             *args)
 
     def update(self):
         self.pre_update and self.pre_update()
@@ -280,7 +294,7 @@ class Model(db.Dict):
     def delete(self):
         self.pre_delete and self.pre_delete()
         pk = self.__primary_key__.name
-        args = (getattr(self, pk), )
+        args = (getattr(self, pk),)
         db.update('delete from `%s` where `%s`=?' % (self.__table__, pk), *args)
         return self
 
@@ -295,10 +309,29 @@ class Model(db.Dict):
         db.insert('%s' % self.__table__, **params)
         return self
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    db.create_engine('bow', 'bow', 'bow')
+    db.create_engine('root', '', 'bow')
     db.update('drop table if exists user')
-    db.update('create table user (id int primary key, name text, email text, passwd text, last_modified real)type=InnoDB')
-    import doctest
-    doctest.testmod()
+    db.update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
+
+
+    # import doctest
+    # doctest.testmod()
+
+    class User(Model):
+        id = IntegerField(primary_key=True)
+        name = StringField()
+        email = StringField(updatable=False)
+        passwd = StringField(default=lambda: '******')
+        last_modified = FloatField()
+
+        def pre_insert(self):
+            self.last_modified = time.time()
+
+
+    u = User(id=10190, name='Michael', email='orm@db.org')
+    r = u.insert()
+    print u.email
+    print u.passwd
