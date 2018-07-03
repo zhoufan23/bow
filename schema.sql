@@ -1,12 +1,10 @@
 -- init database
 
-drop database if exists awesome;
+drop database if exists bow;
 
-create database awesome;
+create database bow;
 
-use awesome;
-
-grant select, insert, update, delete on awesome.* to 'www-data'@'localhost' identified by 'www-data';
+use bow;
 
 create table users (
     `id` varchar(50) not null,
@@ -14,7 +12,7 @@ create table users (
     `password` varchar(50) not null,
     `admin` bool not null,
     `name` varchar(50) not null,
-    `image` varchar(500) not null,
+    `image` varchar(500) default null,
     `created_at` real not null,
     unique key `idx_email` (`email`),
     key `idx_created_at` (`created_at`),
@@ -49,4 +47,4 @@ create table comments (
 -- email / password:
 -- admin@example.com / password
 
-insert into users (`id`, `email`, `password`, `admin`, `name`, `created_at`) values ('0010018336417540987fff4508f43fbaed718e263442526000', 'admin@example.com', '5f4dcc3b5aa765d61d8327deb882cf99', 1, 'Administrator', 1402909113.628);
+insert into users (`id`, `email`, `password`, `admin`, `name`, `created_at`) values ('0010018336417540987fff4508f43fbaed718e263442526000', 'zhoufan_104@163.com', 'e10adc3949ba59abbe56e057f20f883e', 1, 'zhoufan', 1402909113.628);
