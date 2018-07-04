@@ -56,7 +56,7 @@ def build():
         local(' '.join(cmd))
 
 def deploy():
-    newdir = 'bow-%s' % _now()
+    newdir = 'www-%s' % _now()
     run('rm -f %s' % _REMOTE_TMP_TAR)
     put('dist/%s' % _TAR_FILE, _REMOTE_TMP_TAR)
     with cd(_REMOTE_BASE_DIR):
@@ -66,7 +66,6 @@ def deploy():
     with cd(_REMOTE_BASE_DIR):
         sudo('rm -f www')
         sudo('ln -s %s www' % newdir)
-        sudo('chown ubuntu:ubuntu bow')
         sudo('chown -R ubuntu:ubuntu %s' % newdir)
     with settings(warn_only=True):
         sudo('supervisorctl stop bow')
