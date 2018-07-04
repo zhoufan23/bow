@@ -15,13 +15,17 @@ $(function () {
         el: '#form-blog',
         data: {
             name: '{{ name }}',
-            summary: '{{ summary }}',
-            content: '{{ content.replace('\n','$#') if content else '' }}'
+            summary: '{{ summary.replace('\n','$#') if summary else None }}',
+            content: '{{ content.replace('\n','$#') if content else None }}'
         },
         created:function(){ //数据渲染后的操作
+            if(this.summary) {
+                this.summary = this.content.replace(/\$#/g,'\n')
+            }
             if(this.content) {
                 this.content = this.content.replace(/\$#/g,'\n')
             }
+            console.log('1:' + this.name)
         },
         methods: {
             submit: function (event) {
@@ -31,10 +35,14 @@ $(function () {
                         alert(err);
                     }
                     else {
-                        alert('保存成功！');
+                        console.log('保存成功！')
                         return location.assign(redirect);
                     }
                 });
+            },
+            _input: function (e) {
+                this.name = e.target.value
+
             }
         }
     });
@@ -50,7 +58,7 @@ $(function () {
         <form id="form-blog" v-on="submit: submit" class="uk-form uk-form-stacked">
             <div class="uk-form-row">
                 <div class="uk-form-controls">
-                    <input v-model="name" class="uk-width-1-1">
+                    <input v-on="input:_input" v-model="name" class="uk-width-1-1">
                 </div>
             </div>
             <div class="uk-form-row">
