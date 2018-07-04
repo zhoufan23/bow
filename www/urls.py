@@ -2,7 +2,7 @@
 # coding=utf-8
 
 
-import markdown2
+import markdown
 
 import os, re, time, base64, hashlib, logging
 
@@ -92,7 +92,7 @@ def blog(blog_id):
     blog = Blog.get(blog_id)
     if not blog:
         raise notfound()
-    blog.html_content = markdown2.markdown(blog.content)
+    blog.html_content = markdown.markdown(blog.content, extensions=['markdown.extensions.nl2br'])
     comments = Comment.find_by('where blog_id=? order by created_at desc limit 1000', blog_id)
     return dict(blog=blog, comments=comments, user=ctx.request.user)
 
