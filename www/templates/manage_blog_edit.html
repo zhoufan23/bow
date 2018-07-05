@@ -20,12 +20,11 @@ $(function () {
         },
         created:function(){ //数据渲染后的操作
             if(this.summary) {
-                this.summary = this.content.replace(/\$#/g,'\n')
+                this.summary = this.summary.replace(/\$#/g,'\n')
             }
             if(this.content) {
                 this.content = this.content.replace(/\$#/g,'\n')
             }
-            console.log('1:' + this.name)
         },
         methods: {
             submit: function (event) {
