@@ -23,11 +23,14 @@ _REMOTE_TMP_TAR = '/tmp/%s' % _TAR_FILE
 
 _REMOTE_BASE_DIR = '~/bow'
 
+
 def _current_path():
     return os.path.abspath('.')
 
+
 def _now():
     return datetime.now().strftime('%y-%m-%d_%H.%M.%S')
+
 
 def backup():
     '''
@@ -36,11 +39,14 @@ def backup():
     dt = _now()
     f = 'backup-bow-%s.sql' % dt
     with cd('/tmp'):
-        run('mysqldump --user=%s --password=%s --skip-opt --add-drop-table --default-character-set=utf8 --quick bow > %s' % (db_user, db_password, f))
+        run(
+            'mysqldump --user=%s --password=%s --skip-opt --add-drop-table --default-character-set=utf8 --quick bow > %s' % (
+            db_user, db_password, f))
         run('tar -czvf %s.tar.gz %s' % (f, f))
         get('%s.tar.gz' % f, '%s/backup/' % _current_path())
         run('rm -f %s' % f)
         run('rm -f %s.tar.gz' % f)
+
 
 def build():
     '''
@@ -54,6 +60,7 @@ def build():
         cmd.extend(['--exclude=\'%s\'' % ex for ex in excludes])
         cmd.extend(includes)
         local(' '.join(cmd))
+
 
 def deploy():
     newdir = 'www-%s' % _now()
@@ -72,7 +79,9 @@ def deploy():
         sudo('supervisorctl start bow')
         sudo('/etc/init.d/nginx reload')
 
+
 RE_FILES = re.compile('\r?\n')
+
 
 def rollback():
     '''
@@ -107,7 +116,7 @@ def rollback():
                 print ('                   %s' % f)
         print ('==================================================')
         print ('')
-        yn = raw_input ('continue? y/N ')
+        yn = raw_input('continue? y/N ')
         if yn != 'y' and yn != 'Y':
             print ('Rollback cancelled.')
             return
@@ -121,6 +130,7 @@ def rollback():
             sudo('/etc/init.d/nginx reload')
         print ('ROLLBACKED OK.')
 
+
 def restore2local():
     '''
     Restore db to local
@@ -129,7 +139,7 @@ def restore2local():
     fs = os.listdir(backup_dir)
     files = [f for f in fs if f.startswith('backup-') and f.endswith('.sql.tar.gz')]
     files.sort(cmp=lambda s1, s2: 1 if s1 < s2 else -1)
-    if len(files)==0:
+    if len(files) == 0:
         print 'No backup files found.'
         return
     print ('Found %s backup files:' % len(files))
@@ -141,7 +151,7 @@ def restore2local():
     print ('==================================================')
     print ('')
     try:
-        num = int(raw_input ('Restore file: '))
+        num = int(raw_input('Restore file: '))
     except ValueError:
         print ('Invalid file number.')
         return
@@ -155,7 +165,8 @@ def restore2local():
     sqls = [
         'drop database if exists bow;',
         'create database bow;',
-        'grant select, insert, update, delete on bow.* to \'%s\'@\'localhost\' identified by \'%s\';' % (db_user, db_password)
+        'grant select, insert, update, delete on bow.* to \'%s\'@\'localhost\' identified by \'%s\';' % (
+        db_user, db_password)
     ]
     for sql in sqls:
         local(r'mysql -uroot -p%s -e "%s"' % (p, sql))

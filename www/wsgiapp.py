@@ -5,7 +5,9 @@
 A WSGI application entry.
 '''
 
-import logging; logging.basicConfig(level=logging.INFO)
+import logging;
+
+logging.basicConfig(level=logging.INFO)
 
 import os, time
 from datetime import datetime
@@ -15,16 +17,17 @@ from transwarp.web import WSGIApplication, Jinja2TemplateEngine
 
 from config import configs
 
-#init db
+# init db
 db.create_engine(**configs.db)
 
-#init wsgi
+# init wsgi
 wsgi = WSGIApplication(os.path.dirname(os.path.abspath(__file__)))
 
-#init template
+# init template
 template_engine = Jinja2TemplateEngine(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates'))
 
 import urls
+
 wsgi.add_interceptor(urls.user_interceptor)
 wsgi.add_interceptor(urls.manage_interceptor)
 wsgi.add_module(urls)
@@ -43,6 +46,7 @@ def datetime_filter(t):
         return u'%s天前' % (delta // 86400)
     dt = datetime.fromtimestamp(t)
     return u'%s年%s月%s日' % (dt.year, dt.month, dt.day)
+
 
 # 把filter添加到jinjia2，filter名称为datetime，filter本身是一个函数对象:
 template_engine.add_filter('datetime', datetime_filter)
